@@ -13,8 +13,8 @@ const rawPhotos = import.meta.glob('/src/assets/photo/*.{jpg,jpeg,png,JPG,JPEG,P
 const textureUrls = Object.values(rawPhotos).map((mod) => mod.default);
 
 // Import music snowfall
-const rawMusic = import.meta.glob('/src/assets/music/snowfall.*', { eager: true, as: 'url' });
-const musicUrls = Object.values(rawMusic);
+import snowfallMusic from '/src/assets/music/snowfall.mp3';
+const musicUrls = [snowfallMusic];
 
 function App() {
   const mountRef = useRef(null);
