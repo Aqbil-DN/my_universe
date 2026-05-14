@@ -266,7 +266,7 @@ function App() {
   useEffect(() => {
     let scene, camera, renderer, controls, composer;
     let galaxyPoints, starField, photoGalaxyGroup, galacticCore;
-    let textGroup, nebulaGroup;
+    let textGroup, nebulaGroup, spaceClouds;
     let shootingStars = [];
     let distantGalaxies = [];
     let animationFrameId;
@@ -279,7 +279,7 @@ function App() {
       scene = new THREE.Scene();
       sceneRef.current = scene;
 
-      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
       camera.position.set(0, 150, 400);
       cameraRef.current = camera;
 
@@ -299,7 +299,7 @@ function App() {
       controls.enableDamping = true;
       controls.dampingFactor = 0.02;
       controls.autoRotate = false; // Matikan autoRotate karena kita pakai parametric roaming
-      controls.maxDistance = 500;
+      controls.maxDistance = 2500;
       controls.minDistance = 5;
       controlsRef.current = controls;
 
@@ -317,37 +317,49 @@ function App() {
       createAestheticText();
       nebulaGroup = createNebulaClouds();
       scene.add(nebulaGroup);
+      spaceClouds = createRandomSpaceClouds();
 
-      // Tambahkan 5 galaksi background di kejauhan secara diagonal
-      const colorsIn = ['#ff4400', '#00ffcc', '#aa00ff', '#ffdd00', '#0044ff'];
-      const colorsOut = ['#ff0044', '#0088ff', '#4400ff', '#ff8800', '#000044'];
+      // Tambahkan 10 galaksi background menyebar jauh secara vertikal (atas & bawah)
+      const colorsIn = ['#ff4400', '#00ffcc', '#aa00ff', '#ffdd00', '#0044ff', '#ff00ff', '#ffff00', '#00ffff', '#ff4500', '#8a2be2'];
+      const colorsOut = ['#ff0044', '#0088ff', '#4400ff', '#ff8800', '#000044', '#ff0066', '#ffa500', '#40e0d0', '#ff1493', '#4b0082'];
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 10; i++) {
         const distGroup = new THREE.Group();
-        // Optimasi: Kurangi partikel galaxy background dari 12000 menjadi 2500 agar WebGL tidak kewalahan
-        const pts = generateGalaxyParticles(colorsIn[i], colorsOut[i], 2500, 50, 0.2);
-        const clds = createNebulaClouds(10, 50);
+        const pts = generateGalaxyParticles(colorsIn[i], colorsOut[i], 2500, 50, 0.15);
+        const clds = createNebulaClouds(8, 50);
         distGroup.add(pts);
         distGroup.add(clds);
 
-        // Posisi diagonal menyebar jauh (kombinasi XYZ ekstrim)
-        const dist = 400 + Math.random() * 400;
-        const angle = (i / 5) * Math.PI * 2;
+        // Radius orbit horizontal
+        const dist = 600 + Math.random() * 800;
+        const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.5;
+        // Variasi ketinggian ekstrem (atas dan bawah)
+        const yVal = (Math.random() - 0.5) * 1400;
 
         distGroup.position.set(
           Math.cos(angle) * dist,
-          (Math.random() - 0.5) * 500,
+          yVal,
           Math.sin(angle) * dist
         );
 
+        // Kemiringan rotasi awal acak
         distGroup.rotation.set(
           Math.random() * Math.PI,
           Math.random() * Math.PI,
           Math.random() * Math.PI
         );
 
-        const s = 0.5 + Math.random() * 1.0;
+        const s = 0.4 + Math.random() * 0.7;
         distGroup.scale.set(s, s, s);
+
+        // Parameter gerakan orbit (revolusi) dan spin lokal
+        distGroup.userData = {
+          orbitRadius: dist,
+          orbitSpeed: (0.002 + Math.random() * 0.003) * (Math.random() > 0.5 ? 1 : -1),
+          currentAngle: angle,
+          yPos: yVal,
+          spinSpeed: 0.001 + Math.random() * 0.002
+        };
 
         scene.add(distGroup);
         distantGalaxies.push(distGroup);
@@ -430,6 +442,56 @@ function App() {
         group.add(sprite);
       }
 
+      return group;
+    }
+
+    function createRandomSpaceClouds() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      for (let j = 0; j < 5; j++) {
+        const cx = 128 + (Math.random() - 0.5) * 80;
+        const cy = 128 + (Math.random() - 0.5) * 80;
+        const r = 40 + Math.random() * 60;
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        grad.addColorStop(0, 'rgba(255,255,255,0.6)');
+        grad.addColorStop(0.4, 'rgba(255,255,255,0.15)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 256, 256);
+      }
+      const texture = new THREE.CanvasTexture(canvas);
+      const group = new THREE.Group();
+
+      for (let i = 0; i < 50; i++) {
+        const mat = new THREE.SpriteMaterial({
+          map: texture,
+          color: new THREE.Color().setHSL(Math.random(), 0.7, 0.4),
+          transparent: true,
+          opacity: 0.015, // Very faint
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          rotation: Math.random() * Math.PI
+        });
+        const sprite = new THREE.Sprite(mat);
+        
+        // Huge spherical layout
+        const r = 500 + Math.random() * 1400;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(Math.random() * 2 - 1);
+        
+        sprite.position.set(
+          r * Math.sin(phi) * Math.cos(theta),
+          r * Math.sin(phi) * Math.sin(theta),
+          r * Math.cos(phi)
+        );
+        
+        const scale = 400 + Math.random() * 600;
+        sprite.scale.set(scale, scale, 1);
+        group.add(sprite);
+      }
+      scene.add(group);
       return group;
     }
 
@@ -718,10 +780,17 @@ function App() {
       if (starField) starField.rotation.y += 0.0005 * spd;
       if (photoGalaxyGroup) photoGalaxyGroup.rotation.y += 0.0015 * spd;
       if (nebulaGroup) nebulaGroup.rotation.y += 0.0008 * spd;
+      if (spaceClouds) spaceClouds.rotation.y += 0.00005 * spd; // Rotasi awan angkasa global lambat sekali
 
-      distantGalaxies.forEach((g, idx) => {
-        g.rotation.y += (0.001 + idx * 0.0002) * spd;
-        g.rotation.z += 0.0005 * spd;
+      distantGalaxies.forEach((g) => {
+        // 1. Revolusi mengorbit di sekeliling pusat galaksi utama
+        g.userData.currentAngle += g.userData.orbitSpeed * 0.1 * spd;
+        g.position.x = Math.cos(g.userData.currentAngle) * g.userData.orbitRadius;
+        g.position.z = Math.sin(g.userData.currentAngle) * g.userData.orbitRadius;
+        g.position.y = g.userData.yPos; // Mempertahankan tinggi/ketinggiannya
+        
+        // 2. Spin pada piringan poros lokal (bukan rotasi koin)
+        g.rotateY(g.userData.spinSpeed * spd);
       });
 
       if (galacticCore) {
