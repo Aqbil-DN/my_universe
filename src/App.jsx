@@ -649,7 +649,7 @@ function App() {
       >
         <div className="w-20 h-20 border-b-4 border-fuchsia-500 rounded-full animate-spin mb-6"></div>
         <h1 className="text-2xl font-light tracking-[0.3em] uppercase glow-text">Assembling Memory Belt</h1>
-        <p className="text-xs text-slate-400 mt-2">Unlocking {loadedCount} / {textureUrls.length} Memory Fragments...</p>
+        <p className="text-xs text-slate-400 mt-2">Unlocking Memory Fragments...</p>
 
         <div className="w-64 h-1 bg-slate-800 rounded-full mt-4 overflow-hidden">
           <div
