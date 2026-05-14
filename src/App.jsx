@@ -742,10 +742,12 @@ function App() {
 
     function createStarField() {
       const geo = new THREE.BufferGeometry();
-      const pos = new Float32Array(5000 * 3);
-      for (let i = 0; i < 5000; i++) {
+      const count = 8000;
+      const pos = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
         const i3 = i * 3;
-        const r = 150 + Math.random() * 200;
+        // Radius sebaran luas menyelimuti seluruh void angkasa
+        const r = 150 + Math.random() * 2500;
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.random() * Math.PI;
         pos[i3] = r * Math.sin(phi) * Math.cos(theta);
@@ -753,7 +755,13 @@ function App() {
         pos[i3 + 2] = r * Math.cos(phi);
       }
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      starField = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.15, color: 0xffffff, transparent: true, opacity: 0.4 }));
+      starField = new THREE.Points(geo, new THREE.PointsMaterial({ 
+        size: 0.2, 
+        color: 0xffffff, 
+        transparent: true, 
+        opacity: 0.3,
+        sizeAttenuation: true 
+      }));
       scene.add(starField);
     }
 
