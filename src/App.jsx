@@ -106,6 +106,7 @@ function App() {
     let galaxyPoints, starField, photoGalaxyGroup, galacticCore;
     let textGroup, nebulaGroup;
     let shootingStars = [];
+    let distantGalaxies = [];
     let animationFrameId;
     const clock = new THREE.Clock();
     let previousTime = 0;
@@ -147,11 +148,47 @@ function App() {
       });
 
       createGalacticCore();
-      generateGalaxyParticles();
+      galaxyPoints = generateGalaxyParticles();
+      scene.add(galaxyPoints);
       createStarField();
       createShootingStars();
       createAestheticText();
       nebulaGroup = createNebulaClouds();
+      scene.add(nebulaGroup);
+
+      // Tambahkan 5 galaksi background di kejauhan secara diagonal
+      const colorsIn = ['#ff4400', '#00ffcc', '#aa00ff', '#ffdd00', '#0044ff'];
+      const colorsOut = ['#ff0044', '#0088ff', '#4400ff', '#ff8800', '#000044'];
+
+      for (let i = 0; i < 5; i++) {
+        const distGroup = new THREE.Group();
+        const pts = generateGalaxyParticles(colorsIn[i], colorsOut[i], 12000, 50);
+        const clds = createNebulaClouds(10, 50);
+        distGroup.add(pts);
+        distGroup.add(clds);
+
+        // Posisi diagonal menyebar jauh (kombinasi XYZ ekstrim)
+        const dist = 400 + Math.random() * 400; 
+        const angle = (i / 5) * Math.PI * 2;
+        
+        distGroup.position.set(
+          Math.cos(angle) * dist,
+          (Math.random() - 0.5) * 500,
+          Math.sin(angle) * dist
+        );
+
+        distGroup.rotation.set(
+          Math.random() * Math.PI,
+          Math.random() * Math.PI,
+          Math.random() * Math.PI
+        );
+
+        const s = 0.5 + Math.random() * 1.0;
+        distGroup.scale.set(s, s, s);
+
+        scene.add(distGroup);
+        distantGalaxies.push(distGroup);
+      }
 
       await createPhotoGalaxyOptimized();
 
@@ -175,7 +212,7 @@ function App() {
       animate();
     };
 
-    function createNebulaClouds() {
+    function createNebulaClouds(count = 40, spread = 80) {
       // Buat tekstur gradien abstrak (awan yang tidak bulat sempurna/beraturan)
       const canvas = document.createElement('canvas');
       canvas.width = 256;
@@ -197,26 +234,24 @@ function App() {
       }
 
       const texture = new THREE.CanvasTexture(canvas);
-
       const group = new THREE.Group();
 
-      // Tambahkan lebih banyak awan (~40 awan)
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < count; i++) {
         const mat = new THREE.SpriteMaterial({
           map: texture,
           color: new THREE.Color().setHSL(Math.random(), 0.8, 0.6), // Warna-warni
           transparent: true,
-          opacity: 0.04, // Dipertipis lagi karena jumlahnya bertambah banyak
+          opacity: 0.04, 
           blending: THREE.AdditiveBlending,
           depthWrite: false,
-          rotation: Math.random() * Math.PI * 2 // Rotasi acak agar bentuk abstraknya semakin acak
+          rotation: Math.random() * Math.PI * 2
         });
         const sprite = new THREE.Sprite(mat);
 
-        // Tersebar di seluruh galaxy
-        const r = 10 + Math.random() * 80;
+        // Tersebar di seluruh area (spread)
+        const r = 10 + Math.random() * spread;
         const theta = Math.random() * Math.PI * 2;
-        const yOffset = (Math.random() - 0.5) * 20;
+        const yOffset = (Math.random() - 0.5) * (spread * 0.25);
 
         sprite.position.set(
           r * Math.cos(theta),
@@ -224,14 +259,13 @@ function App() {
           r * Math.sin(theta)
         );
 
-        // Skala asimetris agar tidak terlihat bulat
-        const scaleX = 20 + Math.random() * 40;
-        const scaleY = 20 + Math.random() * 40;
+        // Skala asimetris
+        const scaleX = (spread * 0.25) + Math.random() * (spread * 0.5);
+        const scaleY = (spread * 0.25) + Math.random() * (spread * 0.5);
         sprite.scale.set(scaleX, scaleY, 1);
 
         group.add(sprite);
       }
-      scene.add(group);
 
       return group;
     }
@@ -449,13 +483,13 @@ function App() {
       scene.add(photoGalaxyGroup);
     }
 
-    function generateGalaxyParticles() {
-      const params = { count: 60000, size: 0.015, radius: 95, branches: 4, spin: 1, randomness: 0.4, randomnessPower: 3 };
+    function generateGalaxyParticles(colorIn = '#ff0066', colorOut = '#3300ff', count = 60000, radiusMax = 95) {
+      const params = { count, size: 0.015, radius: radiusMax, branches: 4, spin: 1, randomness: 0.4, randomnessPower: 3 };
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(params.count * 3);
       const colors = new Float32Array(params.count * 3);
-      const colorInside = new THREE.Color('#ff0066');
-      const colorOutside = new THREE.Color('#3300ff');
+      const colorInside = new THREE.Color(colorIn);
+      const colorOutside = new THREE.Color(colorOut);
 
       for (let i = 0; i < params.count; i++) {
         const i3 = i * 3;
@@ -478,8 +512,7 @@ function App() {
       geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
       const material = new THREE.PointsMaterial({ size: params.size, sizeAttenuation: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true });
-      galaxyPoints = new THREE.Points(geometry, material);
-      scene.add(galaxyPoints);
+      return new THREE.Points(geometry, material);
     }
 
     function createStarField() {
@@ -522,6 +555,11 @@ function App() {
       if (starField) starField.rotation.y += 0.0005 * spd;
       if (photoGalaxyGroup) photoGalaxyGroup.rotation.y += 0.0015 * spd;
       if (nebulaGroup) nebulaGroup.rotation.y += 0.0008 * spd;
+
+      distantGalaxies.forEach((g, idx) => {
+        g.rotation.y += (0.001 + idx * 0.0002) * spd;
+        g.rotation.z += 0.0005 * spd;
+      });
 
       if (galacticCore) {
         const scale = 1 + Math.sin(time * 2 * spd) * 0.08;
