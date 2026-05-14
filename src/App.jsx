@@ -16,6 +16,166 @@ const textureUrls = Object.values(rawPhotos).map((mod) => mod.default);
 const rawMusic = import.meta.glob('/src/assets/music/snowfall.*', { eager: true });
 const musicUrls = Object.values(rawMusic).map(mod => mod.default || mod);
 
+const galaxyColors = ['#ffffff', '#f8fafc', '#e9d5ff', '#c084fc', '#9333ea', '#581c87'];
+
+function LoadingScreen({ isLoading, loadedCount, totalCount }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    let lWidth, lHeight;
+    let particles = [];
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let loadingAnimId;
+
+    function initLoadingCanvas() {
+      lWidth = canvas.width = window.innerWidth;
+      lHeight = canvas.height = window.innerHeight;
+      particles = [];
+
+      const maxGalaxyRadius = Math.min(lWidth, lHeight) * 0.35;
+      const arms = 15; 
+
+      for (let i = 0; i < 3500; i++) {
+        const distancePow = Math.pow(Math.random(), 2.5); 
+        const distance = distancePow * maxGalaxyRadius;
+        const armIndex = Math.floor(Math.random() * arms);
+        const armOffset = (armIndex / arms) * Math.PI * 2;
+        const spin = distance * 0.015; 
+        const angle = armOffset + spin;
+        const dispersion = (1 - distancePow) * (Math.random() - 0.5) * 40 + (Math.random() - 0.5) * 15;
+
+        let colorIndex = Math.floor(Math.random() * galaxyColors.length);
+        if (distance < maxGalaxyRadius * 0.2) colorIndex = Math.floor(Math.random() * 3); 
+
+        particles.push({
+          distance: distance,
+          angle: angle,
+          dispersion: dispersion,
+          size: Math.random() * 2 + 0.5,
+          color: galaxyColors[colorIndex],
+          baseAlpha: Math.random() * 0.5 + 0.2, 
+          speed: 0.001 + (1 - distancePow) * 0.005, 
+          shimmerPhase: Math.random() * Math.PI * 2, 
+          baseShimmerSpeed: 0.03 + Math.random() * 0.05, 
+          shimmerSpeed: 0.03 + Math.random() * 0.05
+        });
+      }
+    }
+
+    const handleMouseMove = (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    function animateLoadingGalaxy() {
+      const centerX = lWidth / 2;
+      const centerY = lHeight / 2;
+
+      const bgGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(lWidth, lHeight) / 2);
+      bgGradient.addColorStop(0, 'rgba(5, 0, 10, 0.3)'); 
+      bgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');   
+      
+      ctx.fillStyle = bgGradient; 
+      ctx.fillRect(0, 0, lWidth, lHeight);
+
+      particles.forEach(p => {
+        p.angle += p.speed;
+        p.shimmerSpeed = p.baseShimmerSpeed; 
+        
+        const x = centerX + Math.cos(p.angle) * p.distance + Math.cos(p.angle + Math.PI/2) * p.dispersion;
+        const y = centerY + Math.sin(p.angle) * p.distance + Math.sin(p.angle + Math.PI/2) * p.dispersion;
+
+        const dx = mouseX - x;
+        const dy = mouseY - y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        let currentAlpha = p.baseAlpha;
+        let currentSize = p.size;
+        let glowBlur = 0;
+        let isHovered = false;
+
+        if (dist < 120) { 
+          isHovered = true;
+          const force = (120 - dist) / 120;
+          currentAlpha = 0.8 + Math.random() * 0.2; 
+          currentSize = p.size + (force * 3.0); 
+          glowBlur = force * 25; 
+          p.shimmerSpeed = p.baseShimmerSpeed + (force * 0.5); 
+        }
+
+        p.shimmerPhase += p.shimmerSpeed;
+        currentAlpha += Math.sin(p.shimmerPhase) * 0.4;
+
+        if (p.distance < 20) glowBlur = Math.max(glowBlur, 10);
+
+        ctx.beginPath();
+        ctx.arc(x, y, currentSize, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, Math.min(1, currentAlpha));
+
+        if (glowBlur > 0) {
+          ctx.shadowBlur = glowBlur;
+          ctx.shadowColor = isHovered ? (Math.random() > 0.5 ? '#ffffff' : '#e9d5ff') : '#c084fc';
+        } else {
+          ctx.shadowBlur = 0;
+        }
+
+        ctx.fill();
+      });
+
+      ctx.globalAlpha = 1; 
+      loadingAnimId = requestAnimationFrame(animateLoadingGalaxy);
+    }
+
+    const handleResize = () => {
+      if (isLoading) {
+        initLoadingCanvas();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    initLoadingCanvas();
+    animateLoadingGalaxy();
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(loadingAnimId);
+    };
+  }, [isLoading]);
+
+  return (
+    <div
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden cursor-crosshair transition-all duration-1500 ${!isLoading ? 'opacity-0 invisible pointer-events-none' : 'opacity-100 visible'}`}
+      style={{ background: 'radial-gradient(circle at center, #080112 0%, #000000 60%, #000000 100%)' }}
+    >
+      <canvas ref={canvasRef} className="absolute inset-0 z-[1] pointer-events-none" />
+
+      <div className="relative z-[2] text-center pointer-events-none mt-20" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.8)' }}>
+        <h1 className="text-4xl md:text-5xl font-bold tracking-[0.2em] uppercase mb-4 px-4 shimmer-text">
+          Awen Universe
+        </h1>
+        <p className="text-xs md:text-sm text-fuchsia-100 tracking-[0.4em] animate-pulse uppercase">Menciptakan Sabuk Memori...</p>
+        
+        <div className="w-64 h-1 bg-slate-800 rounded-full mt-6 overflow-hidden mx-auto">
+          <div
+            className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-300"
+            style={{ width: `${(loadedCount / totalCount) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const mountRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -156,29 +316,25 @@ function App() {
       nebulaGroup = createNebulaClouds();
       scene.add(nebulaGroup);
 
-      // Tambahkan 10 galaksi background di kejauhan dengan posisi variatif (Spherical 3D)
-      const colorsIn = ['#ff4400', '#00ffcc', '#aa00ff', '#ffdd00', '#0044ff', '#ff00aa', '#00ff44', '#ffff00', '#00aaff', '#ff0000'];
-      const colorsOut = ['#ff0044', '#0088ff', '#4400ff', '#ff8800', '#000044', '#aa00ff', '#00aa44', '#ff8800', '#0044ff', '#880000'];
+      // Tambahkan 5 galaksi background di kejauhan secara diagonal
+      const colorsIn = ['#ff4400', '#00ffcc', '#aa00ff', '#ffdd00', '#0044ff'];
+      const colorsOut = ['#ff0044', '#0088ff', '#4400ff', '#ff8800', '#000044'];
 
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 5; i++) {
         const distGroup = new THREE.Group();
-        
-        // Buat galaksi index 2 dan 7 menjadi warna-warni (rainbow)
-        const isRainbow = (i === 2 || i === 7);
-        const pts = generateGalaxyParticles(colorsIn[i], colorsOut[i], 12000, 50, isRainbow);
+        const pts = generateGalaxyParticles(colorsIn[i], colorsOut[i], 12000, 50, 0.2);
         const clds = createNebulaClouds(10, 50);
         distGroup.add(pts);
         distGroup.add(clds);
 
-        // Posisi menyebar di seluruh 3D space yang jauh (Spherical coordinates)
-        const dist = 600 + Math.random() * 800; // Lebih jauh lagi (600 - 1400)
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos(Math.random() * 2 - 1); // Distribusi spherikal merata
+        // Posisi diagonal menyebar jauh (kombinasi XYZ ekstrim)
+        const dist = 400 + Math.random() * 400;
+        const angle = (i / 5) * Math.PI * 2;
 
         distGroup.position.set(
-          dist * Math.sin(phi) * Math.cos(theta),
-          dist * Math.cos(phi), // Y tidak lagi dibatasi
-          dist * Math.sin(phi) * Math.sin(theta)
+          Math.cos(angle) * dist,
+          (Math.random() - 0.5) * 500,
+          Math.sin(angle) * dist
         );
 
         distGroup.rotation.set(
@@ -187,7 +343,7 @@ function App() {
           Math.random() * Math.PI
         );
 
-        const s = 0.5 + Math.random() * 1.5;
+        const s = 0.5 + Math.random() * 1.0;
         distGroup.scale.set(s, s, s);
 
         scene.add(distGroup);
@@ -487,7 +643,7 @@ function App() {
       scene.add(photoGalaxyGroup);
     }
 
-    function generateGalaxyParticles(colorIn = '#ff0066', colorOut = '#3300ff', count = 60000, radiusMax = 95, isRainbow = false) {
+    function generateGalaxyParticles(colorIn = '#ff0066', colorOut = '#3300ff', count = 60000, radiusMax = 95, opacity = 1.0) {
       const params = { count, size: 0.015, radius: radiusMax, branches: 4, spin: 1, randomness: 0.4, randomnessPower: 3 };
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(params.count * 3);
@@ -510,18 +666,12 @@ function App() {
         positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
 
         const mixedColor = colorInside.clone().lerp(colorOutside, radius / params.radius);
-        
-        if (isRainbow) {
-          // Bikin warna-warni pelangi berdasarkan jarak dan indeks partikel
-          mixedColor.setHSL(((i / params.count) * 5 + (radius / params.radius)) % 1.0, 0.9, 0.6);
-        }
-        
         colors[i3] = mixedColor.r; colors[i3 + 1] = mixedColor.g; colors[i3 + 2] = mixedColor.b;
       }
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-      const material = new THREE.PointsMaterial({ size: params.size, sizeAttenuation: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true });
+      const material = new THREE.PointsMaterial({ size: params.size, sizeAttenuation: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true, transparent: true, opacity: opacity });
       return new THREE.Points(geometry, material);
     }
 
@@ -691,21 +841,7 @@ function App() {
     <div className="w-full h-screen overflow-hidden relative text-white font-sans bg-[#010103]">
       <div ref={mountRef} className="absolute inset-0" />
 
-      {/* Loading Screen */}
-      <div
-        className={`loading-screen ${!isLoading ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-      >
-        <div className="w-20 h-20 border-b-4 border-fuchsia-500 rounded-full animate-spin mb-6"></div>
-        <h1 className="text-2xl font-light tracking-[0.3em] uppercase glow-text">Assembling Memory Belt</h1>
-        <p className="text-xs text-slate-400 mt-2">Unlocking Memory Fragments...</p>
-
-        <div className="w-64 h-1 bg-slate-800 rounded-full mt-4 overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-300"
-            style={{ width: `${(loadedCount / textureUrls.length) * 100}%` }}
-          ></div>
-        </div>
-      </div>
+      <LoadingScreen isLoading={isLoading} loadedCount={loadedCount} totalCount={textureUrls.length} />
 
       {/* UI Overlay */}
       <div
