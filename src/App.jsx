@@ -25,7 +25,7 @@ function LoadingScreen({ isLoading, loadedCount, totalCount }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    
+
     let lWidth, lHeight;
     let particles = [];
     let mouseX = window.innerWidth / 2;
@@ -38,19 +38,20 @@ function LoadingScreen({ isLoading, loadedCount, totalCount }) {
       particles = [];
 
       const maxGalaxyRadius = Math.min(lWidth, lHeight) * 0.35;
-      const arms = 15; 
+      const arms = 15;
 
-      for (let i = 0; i < 3500; i++) {
-        const distancePow = Math.pow(Math.random(), 2.5); 
+      // Optimasi partikel: dikurangi dari 3500 menjadi 800 agar jauh lebih ringan di mobile/low-end
+      for (let i = 0; i < 800; i++) {
+        const distancePow = Math.pow(Math.random(), 2.5);
         const distance = distancePow * maxGalaxyRadius;
         const armIndex = Math.floor(Math.random() * arms);
         const armOffset = (armIndex / arms) * Math.PI * 2;
-        const spin = distance * 0.015; 
+        const spin = distance * 0.015;
         const angle = armOffset + spin;
         const dispersion = (1 - distancePow) * (Math.random() - 0.5) * 40 + (Math.random() - 0.5) * 15;
 
         let colorIndex = Math.floor(Math.random() * galaxyColors.length);
-        if (distance < maxGalaxyRadius * 0.2) colorIndex = Math.floor(Math.random() * 3); 
+        if (distance < maxGalaxyRadius * 0.2) colorIndex = Math.floor(Math.random() * 3);
 
         particles.push({
           distance: distance,
@@ -58,10 +59,10 @@ function LoadingScreen({ isLoading, loadedCount, totalCount }) {
           dispersion: dispersion,
           size: Math.random() * 2 + 0.5,
           color: galaxyColors[colorIndex],
-          baseAlpha: Math.random() * 0.5 + 0.2, 
-          speed: 0.001 + (1 - distancePow) * 0.005, 
-          shimmerPhase: Math.random() * Math.PI * 2, 
-          baseShimmerSpeed: 0.03 + Math.random() * 0.05, 
+          baseAlpha: Math.random() * 0.5 + 0.2,
+          speed: 0.001 + (1 - distancePow) * 0.005,
+          shimmerPhase: Math.random() * Math.PI * 2,
+          baseShimmerSpeed: 0.03 + Math.random() * 0.05,
           shimmerSpeed: 0.03 + Math.random() * 0.05
         });
       }
@@ -79,35 +80,35 @@ function LoadingScreen({ isLoading, loadedCount, totalCount }) {
       const centerY = lHeight / 2;
 
       const bgGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(lWidth, lHeight) / 2);
-      bgGradient.addColorStop(0, 'rgba(5, 0, 10, 0.3)'); 
-      bgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');   
-      
-      ctx.fillStyle = bgGradient; 
+      bgGradient.addColorStop(0, 'rgba(5, 0, 10, 0.3)');
+      bgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+
+      ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, lWidth, lHeight);
 
       particles.forEach(p => {
         p.angle += p.speed;
-        p.shimmerSpeed = p.baseShimmerSpeed; 
-        
-        const x = centerX + Math.cos(p.angle) * p.distance + Math.cos(p.angle + Math.PI/2) * p.dispersion;
-        const y = centerY + Math.sin(p.angle) * p.distance + Math.sin(p.angle + Math.PI/2) * p.dispersion;
+        p.shimmerSpeed = p.baseShimmerSpeed;
+
+        const x = centerX + Math.cos(p.angle) * p.distance + Math.cos(p.angle + Math.PI / 2) * p.dispersion;
+        const y = centerY + Math.sin(p.angle) * p.distance + Math.sin(p.angle + Math.PI / 2) * p.dispersion;
 
         const dx = mouseX - x;
         const dy = mouseY - y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        
+
         let currentAlpha = p.baseAlpha;
         let currentSize = p.size;
         let glowBlur = 0;
         let isHovered = false;
 
-        if (dist < 120) { 
+        if (dist < 120) {
           isHovered = true;
           const force = (120 - dist) / 120;
-          currentAlpha = 0.8 + Math.random() * 0.2; 
-          currentSize = p.size + (force * 3.0); 
-          glowBlur = force * 25; 
-          p.shimmerSpeed = p.baseShimmerSpeed + (force * 0.5); 
+          currentAlpha = 0.8 + Math.random() * 0.2;
+          currentSize = p.size + (force * 3.0);
+          glowBlur = force * 25;
+          p.shimmerSpeed = p.baseShimmerSpeed + (force * 0.5);
         }
 
         p.shimmerPhase += p.shimmerSpeed;
@@ -119,18 +120,19 @@ function LoadingScreen({ isLoading, loadedCount, totalCount }) {
         ctx.arc(x, y, currentSize, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         ctx.globalAlpha = Math.max(0, Math.min(1, currentAlpha));
-
-        if (glowBlur > 0) {
-          ctx.shadowBlur = glowBlur;
-          ctx.shadowColor = isHovered ? (Math.random() > 0.5 ? '#ffffff' : '#e9d5ff') : '#c084fc';
-        } else {
-          ctx.shadowBlur = 0;
-        }
-
         ctx.fill();
+
+        // Optimasi Glow: Menggunakan circle fill biasa alih-alih shadowBlur yang sangat lambat di 2D Canvas
+        if (glowBlur > 0) {
+          ctx.beginPath();
+          ctx.arc(x, y, currentSize + (glowBlur * 0.3), 0, Math.PI * 2);
+          ctx.fillStyle = isHovered ? '#ffffff' : '#c084fc';
+          ctx.globalAlpha = Math.max(0, currentAlpha * 0.3);
+          ctx.fill();
+        }
       });
 
-      ctx.globalAlpha = 1; 
+      ctx.globalAlpha = 1;
       loadingAnimId = requestAnimationFrame(animateLoadingGalaxy);
     }
 
@@ -164,7 +166,7 @@ function LoadingScreen({ isLoading, loadedCount, totalCount }) {
           Awen Universe
         </h1>
         <p className="text-xs md:text-sm text-fuchsia-100 tracking-[0.4em] animate-pulse uppercase">Menciptakan Sabuk Memori...</p>
-        
+
         <div className="w-64 h-1 bg-slate-800 rounded-full mt-6 overflow-hidden mx-auto">
           <div
             className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-300"
@@ -322,7 +324,8 @@ function App() {
 
       for (let i = 0; i < 5; i++) {
         const distGroup = new THREE.Group();
-        const pts = generateGalaxyParticles(colorsIn[i], colorsOut[i], 12000, 50, 0.2);
+        // Optimasi: Kurangi partikel galaxy background dari 12000 menjadi 2500 agar WebGL tidak kewalahan
+        const pts = generateGalaxyParticles(colorsIn[i], colorsOut[i], 2500, 50, 0.2);
         const clds = createNebulaClouds(10, 50);
         distGroup.add(pts);
         distGroup.add(clds);
