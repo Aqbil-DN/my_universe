@@ -16,10 +16,19 @@ const textureUrls = Object.values(rawPhotos).map((mod) => mod.default);
 const rawMusic = import.meta.glob('/src/assets/music/snowfall.*', { eager: true });
 const musicUrls = Object.values(rawMusic).map(mod => mod.default || mod);
 
-const galaxyColors = ['#ffffff', '#f8fafc', '#e9d5ff', '#c084fc', '#9333ea', '#581c87'];
+const galaxyColors = ['#ffffff', '#e9d5ff', '#c084fc', '#9333ea'];
 
 function LoadingScreen({ isLoading, loadedCount, totalCount }) {
   const canvasRef = useRef(null);
+  const isAnimatingRef = useRef(true);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setTimeout(() => {
+        isAnimatingRef.current = false;
+      }, 1500); // Stop animation after fade out
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -28,8 +37,6 @@ function LoadingScreen({ isLoading, loadedCount, totalCount }) {
 
     let lWidth, lHeight;
     let particles = [];
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
     let loadingAnimId;
 
     function initLoadingCanvas() {
@@ -37,99 +44,60 @@ function LoadingScreen({ isLoading, loadedCount, totalCount }) {
       lHeight = canvas.height = window.innerHeight;
       particles = [];
 
-      const maxGalaxyRadius = Math.min(lWidth, lHeight) * 0.35;
-      const arms = 15;
+      const maxGalaxyRadius = Math.min(lWidth, lHeight) * 0.4;
+      const arms = 12; // 12 Lengan spiral
 
-      // Optimasi partikel: dikurangi dari 3500 menjadi 800 agar jauh lebih ringan di mobile/low-end
-      for (let i = 0; i < 800; i++) {
-        const distancePow = Math.pow(Math.random(), 2.5);
+      for (let i = 0; i < 350; i++) {
+        const distancePow = Math.pow(Math.random(), 2.0);
         const distance = distancePow * maxGalaxyRadius;
-        const armIndex = Math.floor(Math.random() * arms);
-        const armOffset = (armIndex / arms) * Math.PI * 2;
-        const spin = distance * 0.015;
+        const armOffset = (Math.floor(Math.random() * arms) / arms) * Math.PI * 2;
+        const spin = distance * 0.02;
         const angle = armOffset + spin;
-        const dispersion = (1 - distancePow) * (Math.random() - 0.5) * 40 + (Math.random() - 0.5) * 15;
+        const dispersion = (1 - distancePow) * (Math.random() - 0.5) * 40;
 
         let colorIndex = Math.floor(Math.random() * galaxyColors.length);
-        if (distance < maxGalaxyRadius * 0.2) colorIndex = Math.floor(Math.random() * 3);
+        if (distance < maxGalaxyRadius * 0.15) colorIndex = 0;
 
         particles.push({
           distance: distance,
           angle: angle,
           dispersion: dispersion,
-          size: Math.random() * 2 + 0.5,
+          size: Math.random() * 1.5 + 0.5,
           color: galaxyColors[colorIndex],
-          baseAlpha: Math.random() * 0.5 + 0.2,
-          speed: 0.001 + (1 - distancePow) * 0.005,
+          speed: 0.0008 + (1 - distancePow) * 0.002, // Putaran sangat pelan & elegan
           shimmerPhase: Math.random() * Math.PI * 2,
-          baseShimmerSpeed: 0.03 + Math.random() * 0.05,
-          shimmerSpeed: 0.03 + Math.random() * 0.05
+          shimmerSpeed: 0.015 + Math.random() * 0.02 // Shimmer yang tenang
         });
       }
     }
 
-    const handleMouseMove = (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-
     function animateLoadingGalaxy() {
+      if (!isAnimatingRef.current) return;
+
       const centerX = lWidth / 2;
       const centerY = lHeight / 2;
 
-      const bgGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, Math.max(lWidth, lHeight) / 2);
-      bgGradient.addColorStop(0, 'rgba(5, 0, 10, 0.3)');
-      bgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
-
-      ctx.fillStyle = bgGradient;
+      // Efek jejak / trail
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(13, 2, 26, 0.3)';
       ctx.fillRect(0, 0, lWidth, lHeight);
+
+      // Additive Blending agar bintang menyala saat bertumpuk tanpa memberatkan kinerja
+      ctx.globalCompositeOperation = 'lighter';
 
       particles.forEach(p => {
         p.angle += p.speed;
-        p.shimmerSpeed = p.baseShimmerSpeed;
 
         const x = centerX + Math.cos(p.angle) * p.distance + Math.cos(p.angle + Math.PI / 2) * p.dispersion;
         const y = centerY + Math.sin(p.angle) * p.distance + Math.sin(p.angle + Math.PI / 2) * p.dispersion;
 
-        const dx = mouseX - x;
-        const dy = mouseY - y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        let currentAlpha = p.baseAlpha;
-        let currentSize = p.size;
-        let glowBlur = 0;
-        let isHovered = false;
-
-        if (dist < 120) {
-          isHovered = true;
-          const force = (120 - dist) / 120;
-          currentAlpha = 0.8 + Math.random() * 0.2;
-          currentSize = p.size + (force * 3.0);
-          glowBlur = force * 25;
-          p.shimmerSpeed = p.baseShimmerSpeed + (force * 0.5);
-        }
-
+        // Efek Shimmer
         p.shimmerPhase += p.shimmerSpeed;
-        currentAlpha += Math.sin(p.shimmerPhase) * 0.4;
+        const alpha = 0.3 + Math.sin(p.shimmerPhase) * 0.7;
 
-        if (p.distance < 20) glowBlur = Math.max(glowBlur, 10);
-
-        ctx.beginPath();
-        ctx.arc(x, y, currentSize, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
-        ctx.globalAlpha = Math.max(0, Math.min(1, currentAlpha));
-        ctx.fill();
-
-        // Optimasi Glow: Menggunakan circle fill biasa alih-alih shadowBlur yang sangat lambat di 2D Canvas
-        if (glowBlur > 0) {
-          ctx.beginPath();
-          ctx.arc(x, y, currentSize + (glowBlur * 0.3), 0, Math.PI * 2);
-          ctx.fillStyle = isHovered ? '#ffffff' : '#c084fc';
-          ctx.globalAlpha = Math.max(0, currentAlpha * 0.3);
-          ctx.fill();
-        }
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+        ctx.fillRect(x - p.size / 2, y - p.size / 2, p.size, p.size);
       });
 
       ctx.globalAlpha = 1;
@@ -148,7 +116,6 @@ function LoadingScreen({ isLoading, loadedCount, totalCount }) {
     animateLoadingGalaxy();
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(loadingAnimId);
     };
@@ -156,16 +123,16 @@ function LoadingScreen({ isLoading, loadedCount, totalCount }) {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden cursor-crosshair transition-all duration-1500 ${!isLoading ? 'opacity-0 invisible pointer-events-none' : 'opacity-100 visible'}`}
-      style={{ background: 'radial-gradient(circle at center, #080112 0%, #000000 60%, #000000 100%)' }}
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden transition-all duration-1500 ${!isLoading ? 'opacity-0 invisible pointer-events-none' : 'opacity-100 visible'}`}
+      style={{ background: 'radial-gradient(circle at center, #0d021a 0%, #000000 60%, #000000 100%)' }}
     >
       <canvas ref={canvasRef} className="absolute inset-0 z-[1] pointer-events-none" />
 
       <div className="relative z-[2] text-center pointer-events-none mt-20" style={{ textShadow: '0 4px 20px rgba(0,0,0,0.8)' }}>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-[0.2em] uppercase mb-4 px-4 shimmer-text">
-          Awen Universe
+        <h1 className="text-2xl md:text-3xl font-bold tracking-[0.2em] uppercase mb-4 px-4 shimmer-text">
+          ASSEMBLING MEMORY BELT
         </h1>
-        <p className="text-xs md:text-sm text-fuchsia-100 tracking-[0.4em] animate-pulse uppercase">Menciptakan Sabuk Memori...</p>
+        <p className="text-[10px] md:text-xs text-fuchsia-100 tracking-[0.3em] animate-pulse uppercase">Unlocking Memory Fragment...</p>
 
         <div className="w-64 h-1 bg-slate-800 rounded-full mt-6 overflow-hidden mx-auto">
           <div
@@ -475,18 +442,18 @@ function App() {
           rotation: Math.random() * Math.PI
         });
         const sprite = new THREE.Sprite(mat);
-        
+
         // Huge spherical layout
         const r = 500 + Math.random() * 1400;
         const theta = Math.random() * Math.PI * 2;
         const phi = Math.acos(Math.random() * 2 - 1);
-        
+
         sprite.position.set(
           r * Math.sin(phi) * Math.cos(theta),
           r * Math.sin(phi) * Math.sin(theta),
           r * Math.cos(phi)
         );
-        
+
         const scale = 400 + Math.random() * 600;
         sprite.scale.set(scale, scale, 1);
         group.add(sprite);
@@ -755,12 +722,12 @@ function App() {
         pos[i3 + 2] = r * Math.cos(phi);
       }
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      starField = new THREE.Points(geo, new THREE.PointsMaterial({ 
-        size: 0.2, 
-        color: 0xffffff, 
-        transparent: true, 
+      starField = new THREE.Points(geo, new THREE.PointsMaterial({
+        size: 0.2,
+        color: 0xffffff,
+        transparent: true,
         opacity: 0.3,
-        sizeAttenuation: true 
+        sizeAttenuation: true
       }));
       scene.add(starField);
     }
@@ -796,7 +763,7 @@ function App() {
         g.position.x = Math.cos(g.userData.currentAngle) * g.userData.orbitRadius;
         g.position.z = Math.sin(g.userData.currentAngle) * g.userData.orbitRadius;
         g.position.y = g.userData.yPos; // Mempertahankan tinggi/ketinggiannya
-        
+
         // 2. Spin pada piringan poros lokal (bukan rotasi koin)
         g.rotateY(g.userData.spinSpeed * spd);
       });
