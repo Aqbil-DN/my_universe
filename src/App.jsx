@@ -156,25 +156,29 @@ function App() {
       nebulaGroup = createNebulaClouds();
       scene.add(nebulaGroup);
 
-      // Tambahkan 5 galaksi background di kejauhan secara diagonal
-      const colorsIn = ['#ff4400', '#00ffcc', '#aa00ff', '#ffdd00', '#0044ff'];
-      const colorsOut = ['#ff0044', '#0088ff', '#4400ff', '#ff8800', '#000044'];
+      // Tambahkan 10 galaksi background di kejauhan dengan posisi variatif (Spherical 3D)
+      const colorsIn = ['#ff4400', '#00ffcc', '#aa00ff', '#ffdd00', '#0044ff', '#ff00aa', '#00ff44', '#ffff00', '#00aaff', '#ff0000'];
+      const colorsOut = ['#ff0044', '#0088ff', '#4400ff', '#ff8800', '#000044', '#aa00ff', '#00aa44', '#ff8800', '#0044ff', '#880000'];
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 10; i++) {
         const distGroup = new THREE.Group();
-        const pts = generateGalaxyParticles(colorsIn[i], colorsOut[i], 12000, 50);
+        
+        // Buat galaksi index 2 dan 7 menjadi warna-warni (rainbow)
+        const isRainbow = (i === 2 || i === 7);
+        const pts = generateGalaxyParticles(colorsIn[i], colorsOut[i], 12000, 50, isRainbow);
         const clds = createNebulaClouds(10, 50);
         distGroup.add(pts);
         distGroup.add(clds);
 
-        // Posisi diagonal menyebar jauh (kombinasi XYZ ekstrim)
-        const dist = 400 + Math.random() * 400; 
-        const angle = (i / 5) * Math.PI * 2;
-        
+        // Posisi menyebar di seluruh 3D space yang jauh (Spherical coordinates)
+        const dist = 600 + Math.random() * 800; // Lebih jauh lagi (600 - 1400)
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(Math.random() * 2 - 1); // Distribusi spherikal merata
+
         distGroup.position.set(
-          Math.cos(angle) * dist,
-          (Math.random() - 0.5) * 500,
-          Math.sin(angle) * dist
+          dist * Math.sin(phi) * Math.cos(theta),
+          dist * Math.cos(phi), // Y tidak lagi dibatasi
+          dist * Math.sin(phi) * Math.sin(theta)
         );
 
         distGroup.rotation.set(
@@ -183,7 +187,7 @@ function App() {
           Math.random() * Math.PI
         );
 
-        const s = 0.5 + Math.random() * 1.0;
+        const s = 0.5 + Math.random() * 1.5;
         distGroup.scale.set(s, s, s);
 
         scene.add(distGroup);
@@ -241,7 +245,7 @@ function App() {
           map: texture,
           color: new THREE.Color().setHSL(Math.random(), 0.8, 0.6), // Warna-warni
           transparent: true,
-          opacity: 0.04, 
+          opacity: 0.04,
           blending: THREE.AdditiveBlending,
           depthWrite: false,
           rotation: Math.random() * Math.PI * 2
@@ -483,7 +487,7 @@ function App() {
       scene.add(photoGalaxyGroup);
     }
 
-    function generateGalaxyParticles(colorIn = '#ff0066', colorOut = '#3300ff', count = 60000, radiusMax = 95) {
+    function generateGalaxyParticles(colorIn = '#ff0066', colorOut = '#3300ff', count = 60000, radiusMax = 95, isRainbow = false) {
       const params = { count, size: 0.015, radius: radiusMax, branches: 4, spin: 1, randomness: 0.4, randomnessPower: 3 };
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(params.count * 3);
@@ -506,6 +510,12 @@ function App() {
         positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
 
         const mixedColor = colorInside.clone().lerp(colorOutside, radius / params.radius);
+        
+        if (isRainbow) {
+          // Bikin warna-warni pelangi berdasarkan jarak dan indeks partikel
+          mixedColor.setHSL(((i / params.count) * 5 + (radius / params.radius)) % 1.0, 0.9, 0.6);
+        }
+        
         colors[i3] = mixedColor.r; colors[i3 + 1] = mixedColor.g; colors[i3 + 2] = mixedColor.b;
       }
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
