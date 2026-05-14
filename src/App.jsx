@@ -13,8 +13,8 @@ const rawPhotos = import.meta.glob('/src/assets/photo/*.{jpg,jpeg,png,JPG,JPEG,P
 const textureUrls = Object.values(rawPhotos).map((mod) => mod.default);
 
 // Import music snowfall
-import snowfallMusic from '/src/assets/music/snowfall.mp3';
-const musicUrls = [snowfallMusic];
+const rawMusic = import.meta.glob('/src/assets/music/snowfall.*', { eager: true });
+const musicUrls = Object.values(rawMusic).map(mod => mod.default || mod);
 
 function App() {
   const mountRef = useRef(null);
@@ -241,7 +241,7 @@ function App() {
       scene.add(textGroup);
 
       const fontLoader = new FontLoader();
-      fontLoader.load('https://unpkg.com/three@0.160.0/examples/fonts/optimer_italic.typeface.json', (font) => {
+      fontLoader.load('/fonts/optimer_italic.typeface.json', (font) => {
         const textMatFront = new THREE.MeshStandardMaterial({
           color: 0xffffff,
           emissive: 0xff0066, // Warna seirama dengan inti galaksi (merah muda terang)
