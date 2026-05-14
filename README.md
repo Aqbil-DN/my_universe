@@ -71,3 +71,5 @@ galaxy/
 
 ## 📸 How to Add Memories
 The application is designed to be fully dynamic. To add new photos to the galaxy, simply drop any `.jpg`, `.png`, or `.jpeg` files into the `src/assets/photo/` directory. The application will automatically detect them, slice them into memory chunks, and inject them into the galaxy orbit on the next refresh!
+
+## You can view the project directly on the web here: https://my-universe-six.vercel.app/
