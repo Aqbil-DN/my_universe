@@ -7,6 +7,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import gsap from 'gsap';
+import profileImg from './assets/profile/profile.png';
 
 // Import otomatis semua gambar JPG, PNG, dll dari folder photo
 const rawPhotos = import.meta.glob('/src/assets/photo/*.{jpg,jpeg,png,JPG,JPEG,PNG}', { eager: true });
@@ -159,6 +160,9 @@ function App() {
   const [isPlayingMusic, setIsPlayingMusic] = useState(false);
   const musicBtnRef = useRef(null);
   const musicTweenRef = useRef(null);
+
+  // Fitur Modal Kontak
+  const [showContactModal, setShowContactModal] = useState(false);
 
   // Refs untuk menyimpan object 3D agar bisa diakses di handler & loop
   const sceneRef = useRef(null);
@@ -943,8 +947,111 @@ function App() {
               ))}
             </div>
           </div>
+
+          {/* Created by Copyright Button */}
+          <button
+            onClick={() => setShowContactModal(true)}
+            className="glass-panel px-6 py-[15px] hover:text-fuchsia-200 border border-slate-800/30 hover:border-fuchsia-500/40 transition-all duration-300 group cursor-pointer flex items-center gap-3 hover:shadow-[0_0_20px_rgba(217,70,239,0.2)] hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fuchsia-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-fuchsia-500"></span>
+            </span>
+            <span>Created by © Aqbil</span>
+          </button>
         </footer>
       </div>
+
+      {/* Contact Modal Overlay */}
+      {showContactModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-all duration-500 animate-fadeIn pointer-events-auto">
+          <div className="glass-panel w-full max-w-md p-8 relative border border-fuchsia-500/30 shadow-[0_0_50px_rgba(167,139,250,0.25)] scale-in flex flex-col items-center text-center">
+
+            {/* Close Button */}
+            <button
+              onClick={() => setShowContactModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-full hover:bg-white/10 transition-all cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Stunning Profile Header */}
+            <div className="relative mb-6 mt-2">
+              {/* Outer glowing orbits */}
+              <div className="absolute inset-0 rounded-full border border-fuchsia-500/30 animate-[spin_12s_linear_infinite]"></div>
+              <div className="absolute -inset-2 rounded-full border border-violet-500/20 animate-[spin_8s_linear_infinite_reverse]"></div>
+
+              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-violet-600 via-fuchsia-500 to-amber-400 flex items-center justify-center p-[2px] shadow-[0_0_30px_rgba(167,139,250,0.4)] relative z-10 overflow-hidden">
+                <img
+                  src={profileImg}
+                  alt="Aqbil Dzaky Nauval"
+                  className="w-full h-full bg-[#0b0514] rounded-full object-cover pointer-events-none select-none"
+                />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-[#0b0514] rounded-full animate-pulse z-20"></div>
+            </div>
+
+            <h3 className="text-2xl font-bold text-white tracking-wide mb-1">Aqbil Dzaky Nauval</h3>
+            <p className="text-xs text-fuchsia-400 font-bold uppercase tracking-[0.2em] mb-6">Creative Frontend Developer</p>
+
+            <p className="text-slate-300 text-[13px] leading-relaxed mb-8 max-w-sm font-light italic">
+              "Weaving digital interfaces with modern code and aesthetic experiences. Let's explore the digital cosmos together."
+            </p>
+
+            {/* Contact Links Container */}
+            <div className="w-full flex flex-col gap-3.5">
+              <a
+                href="https://github.com/Aqbil-DN"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 px-5 flex items-center gap-4 glass-panel border border-slate-800 hover:border-fuchsia-500/50 bg-slate-900/40 hover:bg-fuchsia-950/20 rounded-xl text-[11px] font-medium tracking-widest transition-all duration-300 group cursor-pointer"
+              >
+                <svg className="w-5 h-5 text-slate-300 group-hover:text-fuchsia-400 transition-colors" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+                </svg>
+                <span className="flex-1 text-left uppercase text-slate-300 group-hover:text-white">GitHub</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500 group-hover:text-fuchsia-400 transition-all group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
+
+              <a
+                href="https://instagram.com/aqbil.dn"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 px-5 flex items-center gap-4 glass-panel border border-slate-800 hover:border-fuchsia-500/50 bg-slate-900/40 hover:bg-fuchsia-950/20 rounded-xl text-[11px] font-medium tracking-widest transition-all duration-300 group cursor-pointer"
+              >
+                <svg className="w-5 h-5 text-slate-300 group-hover:text-fuchsia-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+                <span className="flex-1 text-left uppercase text-slate-300 group-hover:text-white">Instagram</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500 group-hover:text-fuchsia-400 transition-all group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
+
+              <a
+                href="https://www.linkedin.com/in/aqbil-dzaky-nauval-8b8707244/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 px-5 flex items-center gap-4 glass-panel border border-slate-800 hover:border-fuchsia-500/50 bg-slate-900/40 hover:bg-fuchsia-950/20 rounded-xl text-[11px] font-medium tracking-widest transition-all duration-300 group cursor-pointer"
+              >
+                <svg className="w-5 h-5 text-slate-300 group-hover:text-fuchsia-400 transition-colors" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                </svg>
+                <span className="flex-1 text-left uppercase text-slate-300 group-hover:text-white">LinkedIn</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500 group-hover:text-fuchsia-400 transition-all group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
