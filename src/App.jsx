@@ -8,6 +8,7 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import gsap from 'gsap';
 import profileImg from './assets/profile/profile.png';
+import CustomCursor from './CustomCursor';
 
 // Import otomatis semua gambar JPG, PNG, dll dari folder photo
 const rawPhotos = import.meta.glob('/src/assets/photo/*.{jpg,jpeg,png,JPG,JPEG,PNG}', { eager: true });
@@ -1052,6 +1053,7 @@ function App() {
           </div>
         </div>
       )}
+      <CustomCursor />
     </div>
   );
 }
