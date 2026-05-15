@@ -47,8 +47,27 @@
     animation: shimmer 2s linear infinite;
     text-shadow: 0 0 20px rgba(192, 132, 252, 0.5);
   }
+
+  @keyframes fadeIn {
+    from { opacity: 0; backdrop-filter: blur(0px); }
+    to { opacity: 1; backdrop-filter: blur(12px); }
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.9) translateY(20px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .scale-in {
+    animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
 }
 
 @keyframes shimmer {
   to { background-position: 200% center; }
 }
+
