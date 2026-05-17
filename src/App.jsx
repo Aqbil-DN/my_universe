@@ -897,12 +897,12 @@ function App() {
 
       {/* UI Overlay */}
       <div
-        className={`fixed inset-0 z-10 flex flex-col justify-between p-8 transition-opacity duration-1500 ease-in-out pointer-events-none ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        className={`fixed inset-0 z-10 flex flex-col justify-between p-3 md:p-8 transition-opacity duration-1500 ease-in-out pointer-events-none ${isLoading ? 'opacity-0' : 'opacity-100'}`}
       >
         <header className="flex justify-between items-start pointer-events-auto">
-          <div className="glass-panel px-8 py-4">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-amber-300 bg-clip-text text-transparent">Awen Universe</h2>
-            <p className="text-[10px] text-slate-400 uppercase tracking-[0.4em]">All of Awen’s beauty was written into this galaxy</p>
+          <div className="glass-panel px-4 py-2 md:px-8 md:py-4">
+            <h2 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-amber-300 bg-clip-text text-transparent">Awen Universe</h2>
+            <p className="text-[8px] md:text-[10px] text-slate-400 uppercase tracking-[0.2em] md:tracking-[0.4em]">All of Awen’s beauty was written into this galaxy</p>
           </div>
         </header>
 
@@ -923,25 +923,25 @@ function App() {
           </div>
         </main>
 
-        <footer className="flex justify-between items-end text-[10px] text-slate-400 tracking-widest uppercase pointer-events-auto">
-          <div className="glass-panel px-6 py-3 flex gap-4 items-center">
-            <div className="flex gap-4 border-r border-slate-700 pr-4 mr-2">
+        <footer className="flex flex-col md:flex-row justify-between items-center md:items-end gap-2 md:gap-0 text-[8px] md:text-[10px] text-slate-400 tracking-widest uppercase pointer-events-auto">
+          <div className="glass-panel px-3 py-2 md:px-6 md:py-3 flex gap-2 md:gap-4 items-center">
+            <div className="flex gap-2 md:gap-4 border-r border-slate-700 pr-2 md:pr-4 mr-1 md:mr-2">
               <button
                 ref={musicBtnRef}
                 onClick={toggleMusic}
-                className={`px-4 py-1.5 rounded-full border transition-all font-bold tracking-widest ${isPlayingMusic ? 'border-fuchsia-500 bg-fuchsia-500/20 text-fuchsia-200 shadow-[0_0_15px_rgba(217,70,239,0.3)]' : 'border-slate-500 bg-transparent text-slate-400 hover:border-slate-400'}`}
+                className={`px-2 py-1 md:px-4 md:py-1.5 rounded-full border transition-all font-bold tracking-wider md:tracking-widest text-[8px] md:text-[10px] ${isPlayingMusic ? 'border-fuchsia-500 bg-fuchsia-500/20 text-fuchsia-200 shadow-[0_0_15px_rgba(217,70,239,0.3)]' : 'border-slate-500 bg-transparent text-slate-400 hover:border-slate-400'}`}
               >
                 {isPlayingMusic ? '♪ PLAYING' : '♪ PAUSED'}
               </button>
             </div>
 
-            <div className="flex gap-2 items-center">
-              <span className="mr-2">Speed:</span>
+            <div className="flex gap-1 md:gap-2 items-center">
+              <span className="mr-1 md:mr-2">Speed:</span>
               {[0.5, 1, 2].map(s => (
                 <button
                   key={s}
                   onClick={() => setSpeedMultiplier(s)}
-                  className={`px-3 py-1 rounded-md border border-fuchsia-500/30 transition-all ${speedMultiplier === s ? 'bg-fuchsia-500/50 text-white shadow-[0_0_10px_rgba(217,70,239,0.5)]' : 'hover:bg-fuchsia-500/20'}`}
+                  className={`px-2 py-0.5 md:px-3 md:py-1 rounded-md border border-fuchsia-500/30 transition-all text-[8px] md:text-[10px] ${speedMultiplier === s ? 'bg-fuchsia-500/50 text-white shadow-[0_0_10px_rgba(217,70,239,0.5)]' : 'hover:bg-fuchsia-500/20'}`}
                 >
                   {s}x
                 </button>
@@ -952,11 +952,11 @@ function App() {
           {/* Created by Copyright Button */}
           <button
             onClick={() => setShowContactModal(true)}
-            className="glass-panel px-6 py-[15px] hover:text-fuchsia-200 border border-slate-800/30 hover:border-fuchsia-500/40 transition-all duration-300 group cursor-pointer flex items-center gap-3 hover:shadow-[0_0_20px_rgba(217,70,239,0.2)] hover:scale-[1.02] active:scale-[0.98]"
+            className="glass-panel px-3 py-2 md:px-6 md:py-[15px] hover:text-fuchsia-200 border border-slate-800/30 hover:border-fuchsia-500/40 transition-all duration-300 group cursor-pointer flex items-center gap-2 md:gap-3 hover:shadow-[0_0_20px_rgba(217,70,239,0.2)] hover:scale-[1.02] active:scale-[0.98] text-[8px] md:text-[10px]"
           >
-            <span className="relative flex h-2 w-2">
+            <span className="relative flex h-1.5 w-1.5 md:h-2 md:w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-fuchsia-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-fuchsia-500"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 md:h-2 md:w-2 bg-fuchsia-500"></span>
             </span>
             <span>Created by © Aqbil</span>
           </button>

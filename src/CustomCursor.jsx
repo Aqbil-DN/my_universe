@@ -1,17 +1,37 @@
 import { useEffect, useRef, useState } from 'react';
 
+function isTouchDevice() {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
+}
+
 export default function CustomCursor() {
   const cursorRef = useRef(null);
   const secondaryCursorRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
-  
+  const [isMobile, setIsMobile] = useState(isTouchDevice);
+
   // Mouse position and target position for smoothing
   const mousePos = useRef({ x: 0, y: 0 });
   const targetPosPrimary = useRef({ x: 0, y: 0 });
   const targetPosSecondary = useRef({ x: 0, y: 0 });
 
+  // Detect mobile on mount and on resize
   useEffect(() => {
+    const checkMobile = () => setIsMobile(isTouchDevice());
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) {
+      // Restore default cursor on mobile
+      document.documentElement.style.cursor = '';
+      document.body.style.cursor = '';
+      return;
+    }
+
     // Hide normal cursor on HTML/Body
     document.documentElement.style.cursor = 'none';
     document.body.style.cursor = 'none';
@@ -82,7 +102,10 @@ export default function CustomCursor() {
       cancelAnimationFrame(animationFrameId);
       observer.disconnect();
     };
-  }, []);
+  }, [isMobile]);
+
+  // Don't render anything on mobile
+  if (isMobile) return null;
 
   return (
     <>
